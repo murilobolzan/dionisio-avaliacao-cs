@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dionísio · Qualidade de Atendimento (CS)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <span class="logo-mark">◈</span>
+        <span class="logo-text">DIONÍSIO</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-group">
+          <div class="nav-group-title">Relatórios</div>
+          <button class="nav-item" data-rota="dashboard">
+            <span class="nav-ico">▤</span><span class="nav-rot">Dashboard de Qualidade</span>
+          </button>
+        </div>
+
+        <div class="nav-group" hidden>
+          <div class="nav-group-title">Operações</div>
+          <button class="nav-item" data-rota="tickets">
+            <span class="nav-ico">✉</span><span class="nav-rot">Fila de Tickets</span>
+          </button>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-group-title">Avaliar</div>
+          <button class="nav-item" data-rota="calculadora">
+            <span class="nav-ico">＋</span><span class="nav-rot">Nova avaliação</span>
+          </button>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-group-title">Avaliações</div>
+          <button class="nav-item" data-rota="historico">
+            <span class="nav-ico">★</span><span class="nav-rot">Avaliações registradas</span>
+            <span class="nav-badge" id="badgePendentes">0</span>
+          </button>
+        </div>
+      </nav>
+
+      <button class="sync" id="sync" type="button" title="Situação do banco de dados">
+        <span class="sync-bola" id="syncBola"></span>
+        <span class="sync-txt" id="syncTxt">só neste navegador</span>
+      </button>
+
+      <div class="sidebar-foot">
+        <div class="avatar">MB</div>
+        <div class="sidebar-foot-info">
+          <strong>Murilo B.</strong>
+          <span>Gestor de CS</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ================= CONTEÚDO ================= -->
+    <main class="conteudo" id="conteudo"></main>
+  </div>
+
+  <div id="tooltip" class="viz-tooltip" hidden></div>
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/dados.js"></script>
+  <script src="js/estado.js"></script>
+  <script src="js/backup.js"></script>
+  <script src="js/nuvem.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/graficos.js"></script>
+  <script src="js/exportar.js"></script>
+  <script src="js/relatorio.js"></script>
+  <script src="js/ficha.js"></script>
+  <script src="js/tela-tickets.js"></script>
+  <script src="js/tela-avaliacao.js"></script>
+  <script src="js/tela-calculadora.js"></script>
+  <script src="js/tela-historico.js"></script>
+  <script src="js/tela-dashboard.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
