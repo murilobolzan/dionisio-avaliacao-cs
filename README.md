@@ -2,7 +2,13 @@
 
 Front-end funcional (sem backend) para **avaliar atendimentos de CS por média ponderada**, **guardar o histórico** e **apresentar o resultado toda semana** — do time inteiro e de cada pessoa.
 
-## Como rodar
+## No ar
+
+**https://murilobolzan.github.io/dionisio-avaliacao-cs/**
+
+Publicado por GitHub Pages, direto da branch `main`: todo `git push` republica o site em cerca de um minuto.
+
+## Como rodar localmente
 
 Não tem build, não tem `npm install`. Duas opções:
 
