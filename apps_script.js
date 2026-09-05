@@ -2,31 +2,65 @@
    apps_script.js — o banco de dados das avaliações
 
    Uma planilha do Google guarda as avaliações; este script publica
-   uma API em cima dela. O site (GitHub/Vercel) conversa com essa API,
-   então a mesma base aparece para todo mundo, em qualquer computador.
+   uma API em cima dela. O site conversa com essa API, então a mesma
+   base aparece para todo mundo, em qualquer computador.
 
    ─────────────────────────────────────────────────────────────
-   COMO COLOCAR NO AR (uma vez, ~3 minutos)
+   SOBRE SEGURANÇA — leia antes de implantar
    ─────────────────────────────────────────────────────────────
 
-   1. Crie uma planilha nova em sheets.new e dê o nome
-      "Avaliações CS · Dionísio".
+   O site é uma página estática e pública. Isso significa que
+   QUALQUER endereço que a página chame é visível para quem abrir a
+   página. Por isso a proteção precisa estar aqui, no servidor.
 
-   2. Nessa planilha: menu Extensões → Apps Script.
+   Como está resolvido:
 
-   3. Apague o conteúdo do editor, cole ESTE arquivo inteiro e salve
-      (ícone de disquete).
+   1. A implantação precisa ser "Qualquer pessoa" — é o único modo
+      que o navegador consegue chamar (a implantação restrita ao
+      domínio devolve a tela de login do Google e o navegador
+      bloqueia por CORS).
 
-   4. Clique em Implantar → Nova implantação.
-        Tipo:              App da Web
+   2. Em troca, TODA chamada exige um TOKEN. Sem token certo, a API
+      não lê nem escreve nada. Quem descobrir a URL não consegue
+      fazer nada com ela.
+
+   3. O token NÃO fica no código do site nem neste arquivo. Ele
+      mora em duas partes:
+        · aqui: em Propriedades do Script (fora do código-fonte)
+        · no site: cada pessoa cola uma vez, e fica só no navegador
+                   dela
+
+      Assim o repositório pode ser público sem expor o banco.
+
+   4. Só o método POST lê ou grava dados. O GET responde apenas
+      "API no ar", sem tocar na planilha — assim uma URL vazada não
+      vira um vazamento de dados nem pelo navegador.
+
+   ─────────────────────────────────────────────────────────────
+   COMO COLOCAR NO AR (~4 minutos)
+   ─────────────────────────────────────────────────────────────
+
+   1. Crie uma planilha em sheets.new, nome "Avaliações CS · Dionísio".
+
+   2. Menu Extensões → Apps Script. Apague tudo e cole este arquivo.
+
+   3. Crie o token (a senha da API):
+        Engrenagem (Configurações do projeto) → Propriedades do script
+        → Adicionar propriedade
+             Propriedade: TOKEN
+             Valor:       uma frase longa e aleatória, só sua
+        Salvar.
+
+   4. Implantar → Nova implantação → App da Web
         Executar como:     Eu
-        Quem tem acesso:   Qualquer pessoa
-      Clique em Implantar e autorize (vai aparecer aviso de app não
-      verificado: Avançado → Acessar projeto).
+        Quem tem acesso:   Qualquer pessoa      ← precisa ser este
+      Implantar e autorizar (Avançado → Acessar projeto).
 
    5. Copie a URL que termina em /exec.
 
-   6. Cole essa URL em js/config.js do site, no campo API_URL.
+   6. No site: menu → Avaliações registradas → Banco de dados
+      compartilhado. Cole a URL e o TOKEN e clique em Conectar.
+      Cada pessoa do time faz isso uma vez, no navegador dela.
 
    A aba "avaliacoes" é criada sozinha na primeira chamada.
 
@@ -34,12 +68,13 @@
    O QUE A API RESPONDE
    ─────────────────────────────────────────────────────────────
 
-     GET  ?acao=listar            → { ok, avaliacoes: [...] }
-     POST { acao:'salvar', avaliacao }
-     POST { acao:'excluir', id }
+     GET   (sem token)              → { ok, mensagem } · só sinal de vida
+     POST  { token, acao:'listar' } → { ok, avaliacoes: [...] }
+     POST  { token, acao:'salvar',  avaliacao }
+     POST  { token, acao:'excluir', id }
 
-   Nada é apagado de verdade: excluir marca a linha como excluída,
-   para o histórico da planilha continuar auditável.
+   Excluir não apaga a linha: marca como excluída, para o histórico
+   da planilha continuar auditável.
    ============================================================ */
 
 const ABA = 'avaliacoes';
@@ -63,6 +98,32 @@ const COLUNAS = [
   'atualizadoEm',
   'excluido',
 ];
+
+/* ---------------------------------------------------------------- */
+/* segurança                                                         */
+/* ---------------------------------------------------------------- */
+
+/** O token vive nas Propriedades do Script, nunca no código. */
+function tokenEsperado() {
+  return PropertiesService.getScriptProperties().getProperty('TOKEN') || '';
+}
+
+/**
+ * Confere o token. Falha fechada: sem TOKEN configurado, ninguém entra.
+ * A comparação é feita de forma constante para não vazar o token pelo
+ * tempo de resposta.
+ */
+function autorizado(recebido) {
+  const esperado = tokenEsperado();
+  if (!esperado) return false;
+  const a = String(recebido || '');
+  if (a.length !== esperado.length) return false;
+  let diff = 0;
+  for (let i = 0; i < esperado.length; i++) {
+    diff |= a.charCodeAt(i) ^ esperado.charCodeAt(i);
+  }
+  return diff === 0;
+}
 
 /* ---------------------------------------------------------------- */
 /* planilha                                                          */
@@ -102,7 +163,6 @@ function paraObjeto(linha) {
 
   av.excluido = av.excluido === true || String(av.excluido).toUpperCase() === 'TRUE';
 
-  /* datas podem voltar como Date, dependendo de como a célula ficou */
   ['avaliadoEm', 'atualizadoEm'].forEach((k) => {
     if (av[k] instanceof Date) av[k] = av[k].toISOString();
     else av[k] = av[k] ? String(av[k]) : '';
@@ -184,14 +244,13 @@ function responder(obj) {
   );
 }
 
-function doGet(e) {
-  try {
-    const acao = (e && e.parameter && e.parameter.acao) || 'listar';
-    if (acao === 'listar') return responder({ ok: true, avaliacoes: listar() });
-    return responder({ ok: false, erro: 'ação desconhecida: ' + acao });
-  } catch (err) {
-    return responder({ ok: false, erro: String(err) });
-  }
+/** Sinal de vida. Não toca na planilha e não pede token de propósito. */
+function doGet() {
+  return responder({
+    ok: true,
+    mensagem: 'API de avaliações no ar. Os dados só respondem a POST com token.',
+    tokenConfigurado: !!tokenEsperado(),
+  });
 }
 
 function doPost(e) {
@@ -200,6 +259,18 @@ function doPost(e) {
        verificação (preflight) que o Apps Script não responde */
     const corpo = JSON.parse((e && e.postData && e.postData.contents) || '{}');
 
+    if (!autorizado(corpo.token)) {
+      return responder({
+        ok: false,
+        erro: tokenEsperado()
+          ? 'token inválido'
+          : 'TOKEN não configurado nas Propriedades do Script',
+      });
+    }
+
+    if (corpo.acao === 'listar') {
+      return responder({ ok: true, avaliacoes: listar() });
+    }
     if (corpo.acao === 'salvar') {
       return responder({ ok: true, avaliacao: salvar(corpo.avaliacao) });
     }
@@ -207,8 +278,7 @@ function doPost(e) {
       return responder({ ok: true, avaliacao: excluir(corpo.id) });
     }
     if (corpo.acao === 'salvarVarias') {
-      const salvas = (corpo.avaliacoes || []).map(salvar);
-      return responder({ ok: true, avaliacoes: salvas });
+      return responder({ ok: true, avaliacoes: (corpo.avaliacoes || []).map(salvar) });
     }
     return responder({ ok: false, erro: 'ação desconhecida' });
   } catch (err) {

@@ -18,6 +18,7 @@
 
 const Nuvem = (function () {
   const CHAVE_FILA = 'dionisio_qualidade_cs_fila_v1';
+  const CHAVE_BANCO = 'dionisio_qualidade_cs_banco_v1';
 
   let ligada = false;
   let estado = 'desligada'; /* desligada | sincronizando | ok | erro | fila */
@@ -58,28 +59,51 @@ const Nuvem = (function () {
   /* conversa com o Apps Script                                        */
   /* ---------------------------------------------------------------- */
 
+  /**
+   * Endereço e token do banco.
+   *
+   * Ficam no navegador de cada pessoa, NÃO no código: o site é público,
+   * então qualquer segredo commitado estaria à vista de todos.
+   */
+  function credenciais() {
+    try {
+      const raw = localStorage.getItem(CHAVE_BANCO);
+      if (raw) {
+        const c = JSON.parse(raw);
+        if (c && c.url) return { url: c.url, token: c.token || '' };
+      }
+    } catch (e) {
+      /* sem acesso ao storage: segue sem banco */
+    }
+    /* plano B: js/config.js — só use se o repositório for privado */
+    const doArquivo = (typeof CONFIG !== 'undefined' && CONFIG.API_URL) || '';
+    return doArquivo ? { url: doArquivo, token: (CONFIG && CONFIG.TOKEN) || '' } : { url: '', token: '' };
+  }
+
   function url() {
-    return (typeof CONFIG !== 'undefined' && CONFIG.API_URL) || '';
+    return credenciais().url;
   }
 
-  async function chamarGet(params) {
-    const u = url() + (url().includes('?') ? '&' : '?') + new URLSearchParams(params);
-    const r = await fetch(u, { method: 'GET', redirect: 'follow' });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    return r.json();
-  }
-
-  async function chamarPost(corpo) {
-    /* text/plain de propósito: com application/json o navegador manda
-       uma verificação prévia que o Apps Script não responde */
-    const r = await fetch(url(), {
+  /**
+   * Toda leitura e escrita é POST com token no corpo.
+   * O token nunca vai na URL (não fica em histórico nem em log de acesso).
+   *
+   * text/plain de propósito: com application/json o navegador manda uma
+   * verificação prévia (preflight) que o Apps Script não responde.
+   */
+  async function chamar(corpo) {
+    const c = credenciais();
+    if (!c.url) throw new Error('banco não configurado');
+    const r = await fetch(c.url, {
       method: 'POST',
       redirect: 'follow',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(corpo),
+      body: JSON.stringify({ ...corpo, token: c.token }),
     });
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    return r.json();
+    const resp = await r.json();
+    if (resp && resp.ok === false) throw new Error(resp.erro || 'recusado pelo banco');
+    return resp;
   }
 
   /* ---------------------------------------------------------------- */
@@ -167,9 +191,9 @@ const Nuvem = (function () {
         if (item.acao === 'salvar') {
           const av = Estado.avaliacao(item.id);
           if (!av) continue; /* foi excluída depois: nada a enviar */
-          await chamarPost({ acao: 'salvar', avaliacao: av });
+          await chamar({ acao: 'salvar', avaliacao: av });
         } else if (item.acao === 'excluir') {
-          await chamarPost({ acao: 'excluir', id: item.id });
+          await chamar({ acao: 'excluir', id: item.id });
         }
         enviados++;
       } catch (err) {
@@ -183,8 +207,7 @@ const Nuvem = (function () {
 
   /** Puxa a planilha e junta com o local. */
   async function baixar() {
-    const resp = await chamarGet({ acao: 'listar' });
-    if (!resp || !resp.ok) throw new Error(resp && resp.erro ? resp.erro : 'resposta inválida');
+    const resp = await chamar({ acao: 'listar' });
     return juntar(resp.avaliacoes || []);
   }
 
@@ -233,7 +256,7 @@ const Nuvem = (function () {
       if (!ligada || !av || !av.id) return;
       enfileirar({ acao: 'salvar', id: av.id });
       marcar('sincronizando');
-      chamarPost({ acao: 'salvar', avaliacao: av })
+      chamar({ acao: 'salvar', avaliacao: av })
         .then((r) => {
           if (r && r.ok) {
             gravarFila(lerFila().filter((x) => !(x.acao === 'salvar' && x.id === av.id)));
@@ -250,7 +273,7 @@ const Nuvem = (function () {
       if (!ligada || !id) return;
       enfileirar({ acao: 'excluir', id });
       marcar('sincronizando');
-      chamarPost({ acao: 'excluir', id })
+      chamar({ acao: 'excluir', id })
         .then((r) => {
           if (r && r.ok) {
             gravarFila(lerFila().filter((x) => !(x.acao === 'excluir' && x.id === id)));
@@ -265,5 +288,53 @@ const Nuvem = (function () {
     sincronizar,
     situacao,
     configurada: () => !!url(),
+
+    /** O que está guardado (o token volta mascarado, para exibir na tela). */
+    credenciais() {
+      const c = credenciais();
+      return {
+        url: c.url,
+        temToken: !!c.token,
+        tokenMascarado: c.token ? c.token.slice(0, 3) + '•••••' + c.token.slice(-2) : '',
+      };
+    },
+
+    /** Guarda endereço e token NESTE navegador e liga a sincronização. */
+    async conectar(endereco, token) {
+      const limpo = String(endereco || '').trim();
+      if (!/^https:\/\/script\.google\.com\/.*\/exec$/.test(limpo)) {
+        throw new Error('Endereço estranho: precisa ser a URL do Apps Script terminando em /exec.');
+      }
+      if (/\/a\/macros\//.test(limpo)) {
+        throw new Error(
+          'Essa implantação está restrita ao domínio e o navegador bloqueia. Reimplante com acesso "Qualquer pessoa".'
+        );
+      }
+      if (!String(token || '').trim()) throw new Error('Informe o token do banco.');
+
+      localStorage.setItem(
+        CHAVE_BANCO,
+        JSON.stringify({ url: limpo, token: String(token).trim() })
+      );
+      ligada = true;
+
+      /* prova que funciona antes de dar certo na cara do usuário */
+      try {
+        await chamar({ acao: 'listar' });
+      } catch (err) {
+        localStorage.removeItem(CHAVE_BANCO);
+        ligada = false;
+        marcar('desligada');
+        throw err;
+      }
+      return sincronizar();
+    },
+
+    /** Esquece o banco neste navegador (os dados locais continuam). */
+    desconectar() {
+      localStorage.removeItem(CHAVE_BANCO);
+      ligada = false;
+      marcar('desligada');
+    },
   };
 })();

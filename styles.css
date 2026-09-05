@@ -840,3 +840,19 @@ table.tbl td.num { text-align: right; font-variant-numeric: tabular-nums; }
 @keyframes pulsa { 0%, 100% { opacity: 1 } 50% { opacity: .3 } }
 
 .sync-txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* barra do banco compartilhado (fica acima da de backup) */
+.backup-bar.banco { border-left-color: var(--accent-light); margin-top: 18px; }
+.backup-bar.banco .backup-info { max-width: 100%; }
+
+.banco-form {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;
+}
+.banco-form input {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 8px 10px;
+  color: var(--txt-1); font-size: 0.78rem; font-family: var(--font-sans);
+}
+.banco-form input:focus { outline: none; border-color: var(--accent); }
+.banco-form input#bancoUrl { flex: 1 1 380px; font-family: var(--font-mono); font-size: 0.72rem; }
+.banco-form input#bancoToken { flex: 0 1 190px; }

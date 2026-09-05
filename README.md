@@ -210,14 +210,30 @@ O único carimbo de tempo é o `avaliadoEm`, gravado sozinho quando você salva:
 
 ## Banco de dados (a planilha do Google)
 
-Sem banco configurado, cada navegador tem a sua base. Com o banco ligado, a mesma base aparece para todo mundo, em qualquer computador.
+Sem banco, cada navegador tem a sua base. Com o banco ligado, a mesma base aparece para todo o time.
 
-O banco é uma **planilha do Google** e a API é um **Apps Script** publicado em cima dela — o mesmo arranjo do funil. O passo a passo completo está no topo de `apps_script.js`; em resumo:
+O banco é uma **planilha do Google** e a API é um **Apps Script** publicado em cima dela — o mesmo arranjo do funil.
 
-1. Crie a planilha, abra **Extensões → Apps Script** e cole o conteúdo de `apps_script.js`
-2. **Implantar → Nova implantação → App da Web**, executando como você, acesso para *qualquer pessoa*
-3. Copie a URL que termina em `/exec`
-4. Cole em `js/config.js`, no campo `API_URL`, e publique
+### Segurança: por que o token não fica no código
+
+O site é uma página estática **pública**. Tudo que a página carrega é visível para quem abrir o site — inclusive qualquer endereço ou senha que estivesse no código. Então a proteção precisa estar no servidor:
+
+1. **A implantação precisa ser "Qualquer pessoa".** A implantação restrita ao domínio (`/a/macros/odionisio.com/…`) devolve a tela de login do Google e o navegador bloqueia por CORS — testado, não funciona.
+2. **Em troca, toda chamada exige um token.** Sem o token certo, a API não lê nem grava nada. Quem descobrir a URL não consegue fazer nada com ela.
+3. **O token não fica no repositório.** Ele mora em Propriedades do Script (lado do Google) e no navegador de cada pessoa (lado do site). O campo em `js/config.js` existe só para o caso de o repositório virar privado — deixe vazio enquanto for público.
+4. **Só POST toca nos dados.** O GET responde apenas "API no ar", sem abrir a planilha.
+5. **O token viaja no corpo do POST**, nunca na URL — assim não fica em histórico de navegação nem em log de acesso.
+
+### Passo a passo (~4 minutos)
+
+1. Crie a planilha em `sheets.new`
+2. **Extensões → Apps Script**, apague tudo e cole o conteúdo de `apps_script.js`
+3. **Configurações do projeto → Propriedades do script → Adicionar**: propriedade `TOKEN`, valor = uma frase longa e aleatória
+4. **Implantar → Nova implantação → App da Web**: executar como você, acesso **Qualquer pessoa**
+5. Copie a URL que termina em `/exec`
+6. No site: **Avaliações registradas → Banco de dados compartilhado** → cole a URL e o token → **Conectar**
+
+Cada pessoa do time faz o passo 6 uma vez, no navegador dela. Mande o token por um canal interno, nunca por aqui.
 
 A aba `avaliacoes` nasce sozinha na primeira chamada, com uma coluna por campo.
 
@@ -230,8 +246,9 @@ O navegador continua sendo a fonte **rápida**; a planilha é a fonte **comparti
 - Sem internet ou com a planilha fora do ar, a avaliação **não se perde**: entra numa fila que sobe sozinha na próxima sincronização.
 - Quando os dois lados têm a mesma avaliação, vence quem foi atualizado por último (`atualizadoEm`).
 - Excluir não apaga a linha na planilha: marca como excluída, para o histórico continuar auditável.
+- Conectar só dá certo depois de o app conversar com o banco de verdade — endereço torto ou token errado não fica salvo.
 
-No rodapé do menu há um indicador com o estado: *só neste navegador* (cinza), *sincronizando* (roxo), *banco sincronizado* (verde), *aguardando internet* (amarelo, com o número de pendências) ou *falha ao sincronizar* (vermelho). Clicar nele força uma sincronização.
+No rodapé do menu há um indicador: *só neste navegador* (cinza), *sincronizando* (roxo), *banco sincronizado* (verde), *aguardando internet* (amarelo, com o número de pendências) ou *falha ao sincronizar* (vermelho).
 
 ### O que ainda não vai para o banco
 

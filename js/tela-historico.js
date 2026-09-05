@@ -105,11 +105,48 @@ const TelaHistorico = (function () {
 
       ${corpo}
 
+      ${bancoHTML()}
+
       ${backupHTML()}
     </div>`;
   }
 
   /** Onde os dados moram + backup em arquivo. */
+  /** Banco compartilhado: endereço e token ficam só neste navegador. */
+  function bancoHTML() {
+    const c = Nuvem.credenciais();
+    const ligado = !!c.url;
+
+    if (ligado) {
+      return `<div class="backup-bar banco">
+        <div class="backup-info">
+          <strong>Banco de dados compartilhado — conectado</strong>
+          <span>As avaliações deste navegador sobem para a planilha e as do time descem para cá.</span>
+          <span class="backup-aviso">Endereço: <code>${UI.esc(c.url.slice(0, 62))}…</code> · token ${UI.esc(
+            c.tokenMascarado
+          )}</span>
+        </div>
+        <div class="backup-acoes">
+          <button class="btn btn-sm" id="btnSincronizar">↻ Sincronizar agora</button>
+          <button class="btn btn-sm btn-fantasma" id="btnDesconectar">Desconectar</button>
+        </div>
+      </div>`;
+    }
+
+    return `<div class="backup-bar banco">
+      <div class="backup-info">
+        <strong>Banco de dados compartilhado — desligado</strong>
+        <span>Hoje suas avaliações ficam só neste navegador. Ligando o banco, o time inteiro passa a ver a mesma base.</span>
+        <span class="backup-aviso">O endereço e o token ficam <em>só aqui neste navegador</em> — nunca no código do site, que é público. O passo a passo está no arquivo <code>apps_script.js</code>.</span>
+        <div class="banco-form">
+          <input type="url" id="bancoUrl" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" />
+          <input type="password" id="bancoToken" placeholder="token do banco" autocomplete="off" />
+          <button class="btn btn-primario btn-sm" id="btnConectar">Conectar</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
   function backupHTML() {
     const r = Backup.resumo();
     return `<div class="backup-bar">
@@ -143,6 +180,52 @@ const TelaHistorico = (function () {
     });
 
     UI.on(root, 'click', '[data-editar]', (ev, el) => App.ir('calculadora/' + el.dataset.editar));
+
+    /* ---- banco compartilhado ---- */
+    const btnConectar = UI.q('#btnConectar', root);
+    if (btnConectar) {
+      btnConectar.addEventListener('click', async () => {
+        const endereco = UI.q('#bancoUrl', root).value;
+        const token = UI.q('#bancoToken', root).value;
+        btnConectar.disabled = true;
+        btnConectar.textContent = 'Conectando…';
+        try {
+          await Nuvem.conectar(endereco, token);
+          App.atualizarBadge();
+          montar(root);
+          UI.toast('Banco conectado. Suas avaliações agora sobem para a planilha.');
+        } catch (err) {
+          UI.toast(err.message || 'Não consegui conectar.', true);
+          btnConectar.disabled = false;
+          btnConectar.textContent = 'Conectar';
+        }
+      });
+    }
+
+    const btnSinc = UI.q('#btnSincronizar', root);
+    if (btnSinc) {
+      btnSinc.addEventListener('click', async () => {
+        btnSinc.disabled = true;
+        const r = await Nuvem.sincronizar();
+        btnSinc.disabled = false;
+        if (r.ok) {
+          if (r.mudou) montar(root);
+          UI.toast(r.mudou ? 'Atualizado com a planilha.' : 'Tudo em dia com a planilha.');
+        } else {
+          UI.toast('Não consegui falar com a planilha: ' + (r.erro || r.motivo), true);
+        }
+      });
+    }
+
+    const btnDesc = UI.q('#btnDesconectar', root);
+    if (btnDesc) {
+      btnDesc.addEventListener('click', () => {
+        if (!confirm('Desconectar o banco neste navegador? As avaliações já baixadas continuam aqui.')) return;
+        Nuvem.desconectar();
+        montar(root);
+        UI.toast('Banco desconectado deste navegador.');
+      });
+    }
 
     /* ---- backup em arquivo ---- */
     UI.q('#btnBackup', root).addEventListener('click', () => {
