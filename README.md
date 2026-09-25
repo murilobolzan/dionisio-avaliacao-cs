@@ -35,13 +35,13 @@ A base **começa vazia**: só aparece no dashboard o que você avaliar. Os 14 ti
 
 São **4 critérios**, com peso fixo e escala descrita nota por nota:
 
-| # | Critério | Peso |
-|---|---|---|
-| 1 | Entendeu o problema de fato | 1 |
-| 2 | Resolveu de fato | 2 |
-| 3 | Qualidade técnica da resposta | 2 |
-| 4 | Tom adequado, empático e no padrão Dionísio | 1 |
-|  | **Σ pesos** | **6** |
+| # | Critério | Peso | O que avalia |
+|---|---|---|---|
+| 1 | Compreensão do problema | 1 | Identificou corretamente a necessidade do cliente antes de orientar ou agir. |
+| 2 | Resolução e eficácia | 2 | Resolveu a necessidade e conduziu o atendimento até uma conclusão adequada. |
+| 3 | Qualidade técnica e precisão | 2 | A resposta foi correta, clara, completa e tecnicamente adequada ao caso. |
+| 4 | Comunicação e experiência do cliente | 1 | Clareza, cordialidade, segurança e padrão de comunicação Dionísio. |
+|  | **Σ pesos** | **6** | |
 
 ```
 ponderado(critério) = nota (0, 1, 2, 3, 4 ou 5) × peso
@@ -55,55 +55,55 @@ Só entra na base a avaliação **completa** (nota nos 4 critérios) — meia av
 
 Cada nota de cada critério tem uma descrição — é o que faz duas pessoas darem a mesma nota para o mesmo atendimento. Na ficha ela aparece de três formas: no *tooltip* de cada botão, em destaque logo abaixo (a da nota escolhida) e na lista completa pelo link **ver escala completa**. A descrição da nota dada também sai na imagem exportada, ao lado do critério.
 
-**1. Entendeu o problema de fato** (peso 2)
+**1. Compreensão do problema** (peso 1)
 
 | Nota | Significa |
 |---|---|
-| 0 | Não entendeu e não buscou entender. |
-| 1 | Não entendeu e respondeu por suposição, sem perguntar nada ao cliente. |
-| 2 | Não entendeu o problema do cliente, mas buscou entender. |
-| 3 | Entendeu parcialmente o problema do cliente. |
-| 4 | Entendeu parcialmente o problema do cliente e buscou entender a fundo. |
-| 5 | Entendeu completamente o problema do cliente. |
+| 0 | Não compreendeu o problema e não tentou investigá-lo. |
+| 1 | Interpretou incorretamente e respondeu com base em uma suposição. |
+| 2 | Não compreendeu inicialmente, mas fez perguntas para tentar identificar o problema. |
+| 3 | Compreendeu o problema principal, mas deixou pontos relevantes sem investigar. |
+| 4 | Compreendeu o problema e investigou os principais pontos necessários para solucioná-lo. |
+| 5 | Compreendeu completamente o contexto, identificou a causa ou necessidade real e, quando necessário, investigou além da dúvida inicial. |
 
-**2. Resolveu de fato** (peso 3)
-
-| Nota | Significa |
-|---|---|
-| 0 | Não conseguiu resolver. |
-| 1 | Respondeu parcialmente as dúvidas do cliente e não garantiu que ele entendeu. |
-| 2 | Respondeu parcialmente as dúvidas do cliente e garantiu que ele entendeu. |
-| 3 | Respondeu o cliente, mas sem garantir que ele entendeu. |
-| 4 | Resolveu o problema do cliente. |
-| 5 | Resolveu o problema do cliente garantindo que ele entendeu. |
-
-**3. Qualidade técnica da resposta** (peso 3)
+**2. Resolução e eficácia** (peso 2)
 
 | Nota | Significa |
 |---|---|
-| 0 | Respondeu de forma equivocada ao cliente. |
-| 1 | Resposta abaixo do esperado na qualidade técnica: incompleta e sem clareza. |
-| 2 | Resposta correta no geral, mas com informação faltando — o cliente teve que perguntar de novo. |
-| 3 | Resposta sem profundidade técnica, porém correta e ajustada ao caso. |
-| 4 | Resposta tecnicamente boa, que resolveu o problema do cliente garantindo que ele entendeu. |
-| 5 | Resposta tecnicamente excelente, que resolveu o problema do cliente garantindo que ele entendeu. |
+| 0 | Não resolveu e não apresentou um caminho para solução. |
+| 1 | Deu uma orientação insuficiente ou apenas parcial, sem direcionar os próximos passos. |
+| 2 | Resolveu apenas parte da necessidade, deixando pendências relevantes. |
+| 3 | Apresentou uma solução adequada, mas não confirmou se o cliente conseguiu aplicar ou se a necessidade foi resolvida. |
+| 4 | Resolveu a necessidade do cliente e orientou corretamente os próximos passos. |
+| 5 | Resolveu a necessidade de forma completa, confirmou o resultado ou entendimento do cliente e, quando necessário, antecipou possíveis dúvidas ou próximos passos. |
 
-**4. Tom adequado, empático e no padrão Dionísio** (peso 2)
+**3. Qualidade técnica e precisão** (peso 2)
 
 | Nota | Significa |
 |---|---|
-| 0 | Desrespeitou o cliente. |
-| 1 | Respondeu de forma seca ou ríspida, sem nenhuma empatia. |
-| 2 | Respondeu de forma desleixada. |
-| 3 | Respondeu com alguns erros de digitação e pontuação e sem saudação inicial. |
-| 4 | Respondeu com alguns erros de digitação e pontuação. |
-| 5 | Respondeu de forma cordial e no padrão Dionísio. |
+| 0 | Informação incorreta ou orientação que pode gerar um problema para o cliente. |
+| 1 | Resposta predominantemente incorreta, superficial ou sem fundamento. |
+| 2 | Resposta parcialmente correta, mas com informações importantes faltando ou orientação pouco clara. |
+| 3 | Resposta correta, porém incompleta ou sem o nível de detalhamento necessário, fazendo o cliente precisar perguntar novamente. |
+| 4 | Resposta correta, clara e adequada ao caso, com as informações necessárias para o cliente prosseguir. |
+| 5 | Resposta tecnicamente completa e precisa, utilizando o melhor recurso disponível para facilitar o entendimento, como passo a passo, exemplos, prints, vídeos ou outras orientações pertinentes. |
+
+**4. Comunicação e experiência do cliente** (peso 1)
+
+| Nota | Significa |
+|---|---|
+| 0 | Comunicação desrespeitosa, inadequada ou que prejudica claramente a experiência do cliente. |
+| 1 | Comunicação seca, ríspida ou pouco profissional. |
+| 2 | Comunicação pouco cuidadosa, confusa ou excessivamente informal. |
+| 3 | Comunicação adequada, mas com problemas perceptíveis de clareza, organização, escrita ou condução. |
+| 4 | Comunicação clara, cordial, profissional e adequada ao contexto. |
+| 5 | Comunicação clara, cordial, segura e humanizada, com postura consultiva e proativa, transmitindo domínio do assunto e deixando o cliente seguro sobre a solução. |
 
 O bloco **TEMPO** (1ª resposta e duração) é informativo e não entra na média.
 
 A **classificação do atendimento** (rotina, risco de churn, bug, cliente irritado, onboarding, financeiro) é só um rótulo para agrupar no dashboard — **não altera peso nem corte**.
 
-Para mudar pesos, corte ou os textos da escala: `js/dados.js` → `PESOS`, `CORTE_MINIMO` e `GRUPOS_CRITERIOS` (campo `escala` de cada critério). Para incluir ou trocar alguém no time: `ATENDENTES`, no mesmo arquivo — ele alimenta o seletor de CS e a quebra por membro.
+Para mudar pesos, corte ou os textos da escala: `js/dados.js` → `PESOS`, `CORTE_MINIMO` e `GRUPOS_CRITERIOS` (campo `escala` de cada critério). Para incluir ou trocar alguém no time (hoje: Murilo, Victoria, Ryan e Pedro): `ATENDENTES`, no mesmo arquivo — ele alimenta o seletor de CS e a quebra por membro.
 
 ## Dashboard semanal
 

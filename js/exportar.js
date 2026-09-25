@@ -520,7 +520,8 @@ const Exportar = (function () {
     const blocos = [blocoAssunto(med, v), blocoIdentificacao(med, v), blocoCabecalhoTabela()];
 
     GRUPOS_CRITERIOS.forEach((g) => {
-      blocos.push(blocoGrupo(g.nome));
+      /* grupo sem nome não vira faixa na imagem */
+      if (g.nome) blocos.push(blocoGrupo(g.nome));
       g.criterios.forEach((c) => {
         const linha =
           v.res.linhas.find((l) => l.id === c.id) || { peso: PESOS[c.id], nota: null, ponderado: 0 };

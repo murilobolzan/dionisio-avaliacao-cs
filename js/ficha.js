@@ -60,9 +60,10 @@ const Ficha = (function () {
 
   /** Todos os grupos de critérios, na ordem da planilha. */
   function criteriosHTML(notas) {
+    /* grupo sem nome não ganha subtítulo: a régua atual é uma lista só */
     return GRUPOS_CRITERIOS.map(
       (g) => `<div class="grupo-crit">
-        <div class="grupo-crit-head">${UI.esc(g.nome)}</div>
+        ${g.nome ? `<div class="grupo-crit-head">${UI.esc(g.nome)}</div>` : ''}
         ${g.criterios.map((c) => critHTML(c, notas[c.id] ?? null)).join('')}
       </div>`
     ).join('');
